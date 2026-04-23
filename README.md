@@ -167,7 +167,7 @@ Crea una cuenta en `/register` - se crean automáticamente las 7 categorías por
 
 ## 🔌 Cambiar Modelo de IA
 
-Por defecto usa `anthropic/claude-3-haiku`. Puedes cambiarlo en `lib/openrouter.ts` línea 94:
+Por defecto usa `anthropic/claude-3-haiku` via **OpenRouter**. Puedes cambiarlo en `lib/openrouter.ts` línea 94:
 
 ```typescript
 // Línea 94 - Cambia el modelo
@@ -186,6 +186,66 @@ model: 'anthropic/claude-3-haiku',  // Modelo actual
 - `meta-llama/llama-3.2-11b-vision-instruct`
 
 Ver modelos disponibles: https://openrouter.ai/models
+
+---
+
+## 🔑 Usar tu Propia API (no OpenRouter)
+
+Si tienes tu propia API de Anthropic, OpenAI, o Google, edita `lib/openrouter.ts`:
+
+### Opción 1: Anthropic (Claude)
+
+```typescript
+// Línea 83-91 - Reemplaza el fetch:
+const response = await fetchWithTimeout(
+  'https://api.anthropic.com/v1/messages',
+  {
+    method: 'POST',
+    headers: {
+      'x-api-key': 'tu-api-key-de-anthropic',
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 500,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: '...' },
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64Data } }
+          ]
+        }
+      ]
+    }),
+  },
+  90000
+)
+```
+
+### Opción 2: OpenAI
+
+```typescript
+// Usa el SDK oficial:
+import OpenAI from 'openai'
+const openai = new OpenAI({ apiKey: 'tu-api-key' })
+
+const result = await openai.chat.completions.create({
+  model: 'gpt-4o-mini',
+  messages: [{ role: 'user', content: [...] }],
+})
+```
+
+### Opción 3: Google Gemini (directo)
+
+```typescript
+import { GoogleGenerativeAI } from '@google/generative-ai'
+const genAI = new GoogleGenerativeAI('tu-api-key')
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+
+const result = await model.generateContent([prompt, imagePart])
+```
 
 ---
 
