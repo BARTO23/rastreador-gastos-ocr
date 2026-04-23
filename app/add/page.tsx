@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createWorker } from 'tesseract.js'
-import { Upload, Loader2, Receipt, ArrowRight, X } from 'lucide-react'
+import { Upload, Loader2, Receipt, X } from 'lucide-react'
 
 interface Category {
   id: string
@@ -17,11 +16,8 @@ export default function AddExpensePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [image, setImage] = useState<string | null>(null)
-  const [ocrText, setOcrText] = useState('')
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [processingProgress, setProcessingProgress] = useState(0)
+  const [ocrLoading, setOcrLoading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
 
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -31,24 +27,23 @@ export default function AddExpensePage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const res = await fetch('/api/categories')
-        if (res.ok) {
-          const data = await res.json()
-          setCategories(data.categories || [])
-          if (data.categories?.length > 0) {
-            setCategoryId(data.categories[0].id)
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching categories:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchCategories()
   }, [])
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/categories')
+      if (res.ok) {
+        const data = await res.json()
+        setCategories(data.categories || [])
+        if (data.categories?.length > 0) {
+          setCategoryId(data.categories[0].id)
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err)
+    }
+  }
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -63,81 +58,61 @@ export default function AddExpensePage() {
   }
 
   const processImage = async (imageData: string) => {
-    setIsProcessing(true)
-    setProcessingProgress(0)
-    setOcrText('')
+    setOcrLoading(true)
+    setError('')
 
     try {
-      const worker = await createWorker('spa+eng', 1, {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            setProcessingProgress(Math.round(m.progress * 100))
-          }
-        },
+      const res = await fetch('/api/ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageData }),
       })
 
-      const { data: { text } } = await worker.recognize(imageData)
-      await worker.terminate()
+      const data = await res.json()
 
-      setOcrText(text)
-      extractDataFromText(text)
+      if (!res.ok) {
+        setError(data.error || 'Error al procesar')
+        return
+      }
+
+      setAmount(data.amount?.toString() || '')
+      setDescription(data.description || '')
+      setDate(data.date || new Date().toISOString().split('T')[0])
+
+      const normalizedCategory = normalizeCategory(data.category)
+      const matchedCategory = categories.find(
+        (c) => c.name.toLowerCase() === normalizedCategory.toLowerCase()
+      )
+      if (matchedCategory) {
+        setCategoryId(matchedCategory.id)
+      }
     } catch (err) {
       console.error('OCR Error:', err)
+      setError('Error al procesar la imagen')
     } finally {
-      setIsProcessing(false)
+      setOcrLoading(false)
     }
   }
 
-  const extractDataFromText = (text: string) => {
-    const lines = text.split('\n').filter((l) => l.trim())
-
-    const amountPatterns = [
-      /total[:\s]*\$?([\d,]+\.?\d*)/i,
-      /importe[:\s]*\$?([\d,]+\.?\d*)/i,
-      /monto[:\s]*\$?([\d,]+\.?\d*)/i,
-      /[\d,]+\.\d{2}\s*$/m,
-    ]
-
-    for (const pattern of amountPatterns) {
-      const match = text.match(pattern)
-      if (match) {
-        const value = match[1] || match[0]
-        const cleanValue = value.replace(/[,$]/g, '')
-        const parsed = parseFloat(cleanValue)
-        if (!isNaN(parsed) && parsed > 0 && parsed < 1000000) {
-          setAmount(parsed.toFixed(2))
-          break
-        }
-      }
+  const normalizeCategory = (category: string): string => {
+    const cat = category.toLowerCase().trim()
+    const map: Record<string, string> = {
+      comida: 'comida',
+      food: 'comida',
+      transports: 'transporte',
+      transporte: 'transporte',
+      utilities: 'utilities',
+      luz: 'utilities',
+      agua: 'utilities',
+      entertainment: 'entertainment',
+      entretenimiento: 'entertainment',
+      health: 'salud',
+      salud: 'salud',
+      shopping: 'shopping',
+      otros: 'otros',
+      other: 'otros',
     }
-
-    const datePatterns = [
-      /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/,
-      /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/,
-    ]
-
-    for (const pattern of datePatterns) {
-      const match = text.match(pattern)
-      if (match) {
-        try {
-          const dateStr = match[0]
-          const parsed = new Date(dateStr)
-          if (!isNaN(parsed.getTime())) {
-            setDate(parsed.toISOString().split('T')[0])
-            break
-          }
-        } catch {
-          // continue
-        }
-      }
-    }
-
-    const firstMeaningfulLine = lines.find(
-      (line) => line.length > 3 && !/^[\d\s\-\/]+$/.test(line)
-    )
-    if (firstMeaningfulLine) {
-      setDescription(firstMeaningfulLine.substring(0, 50))
-    }
+    return map[cat] || category
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,7 +129,6 @@ export default function AddExpensePage() {
           description,
           date,
           categoryId,
-          ocrText,
         }),
       })
 
@@ -176,14 +150,13 @@ export default function AddExpensePage() {
     <div className="p-6">
       <div className="mx-auto max-w-2xl">
         <h1 className="mb-6 text-2xl font-bold text-slate-800">
-          Agregar Gasto con OCR
+          Agregar Gasto con AI
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Image Upload */}
           <div className="rounded-xl border bg-white p-6">
             <h2 className="mb-4 text-lg font-semibold text-slate-800">
-              1. Sube tu ticket o factura
+              1. Sube tu ticket (OpenAI Vision)
             </h2>
 
             {!image ? (
@@ -193,12 +166,8 @@ export default function AddExpensePage() {
                 className="flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 py-12 transition hover:border-[#6366f1]"
               >
                 <Upload className="mb-2 h-10 w-10 text-slate-400" />
-                <p className="text-sm text-slate-600">
-                  Haz clic para subir una imagen
-                </p>
-                <p className="text-xs text-slate-400">
-                  JPG, PNG o PDF
-                </p>
+                <p className="text-sm text-slate-600">Haz clic para subir</p>
+                <p className="text-xs text-slate-400">JPG, PNG</p>
               </button>
             ) : (
               <div className="relative">
@@ -211,7 +180,8 @@ export default function AddExpensePage() {
                   type="button"
                   onClick={() => {
                     setImage(null)
-                    setOcrText('')
+                    setAmount('')
+                    setDescription('')
                   }}
                   className="absolute right-2 top-2 rounded-full bg-slate-800 p-1 text-white"
                 >
@@ -228,37 +198,17 @@ export default function AddExpensePage() {
               className="hidden"
             />
 
-            {isProcessing && (
-              <div className="mt-4">
-                <div className="mb-2 flex items-center justify-center gap-2 text-sm text-slate-600">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Procesando OCR... {processingProgress}%
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                  <div
-                    className="h-full bg-[#6366f1] transition-all"
-                    style={{ width: `${processingProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {ocrText && (
-              <div className="mt-4">
-                <p className="mb-2 text-sm font-medium text-slate-700">
-                  Texto reconocido:
-                </p>
-                <pre className="max-h-32 overflow-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-600 whitespace-pre-wrap">
-                  {ocrText}
-                </pre>
+            {ocrLoading && (
+              <div className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-600">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Procesando con IA...
               </div>
             )}
           </div>
 
-          {/* Manual Input */}
           <div className="rounded-xl border bg-white p-6">
             <h2 className="mb-4 text-lg font-semibold text-slate-800">
-              2. Verifica los datos
+              2. Verifica los datos (auto-detectado)
             </h2>
 
             <div className="space-y-4">
@@ -297,9 +247,7 @@ export default function AddExpensePage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Fecha
-                </label>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Fecha</label>
                 <input
                   type="date"
                   value={date}
@@ -330,9 +278,7 @@ export default function AddExpensePage() {
           </div>
 
           {error && (
-            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
-              {error}
-            </div>
+            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">{error}</div>
           )}
 
           <button

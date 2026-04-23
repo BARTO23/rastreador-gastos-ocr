@@ -17,7 +17,7 @@
 
 | Característica | Descripción |
 |--------------|-------------|
-| 📷 **OCR de Tickets** | Escanea recibos y facturas - extracción automática de monto y fecha usando Tesseract.js |
+| 🤖 **AI OCR** | Escanea recibos con OpenAI Vision - extrae monto, fecha y categoría automáticamente |
 | 🏷️ **Categorización** | 7 categorías por defecto + categorías personalizadas |
 | 💰 **Presupuestos** | Define límites mensuales con alertas al 80% y 100% |
 | 📊 **Reportes Fiscales** | Exporta tus gastos en CSV por rango de fechas |
@@ -45,7 +45,7 @@ Mira el proyecto en acción:
 - **Frontend/Backend**: [Next.js 14](https://nextjs.org) (App Router)
 - **Base de Datos**: [SQLite](https://sqlite.org) + [Prisma](https://prisma.io)
 - **Auth**: [NextAuth.js](https://next-auth.js.org)
-- **OCR**: [Tesseract.js](https://tesseract.projectnaptha.com)
+- **AI/OCR**: [OpenAI Vision API](https://platform.openai.com) (GPT-4o mini) para OCR y categorización
 - **Estilos**: [Tailwind CSS](https://tailwindcss.com)
 - **Icons**: [Lucide React](https://lucide.dev)
 
@@ -73,6 +73,7 @@ cp .env.example .env
 # DATABASE_URL="file:./dev.db"
 # NEXTAUTH_SECRET="tu-secret-aqui"
 # NEXTAUTH_URL="http://localhost:3000"
+# OPENAI_API_KEY="sk-tu-api-key"
 
 # 4. Genera Prisma y crea la base de datos
 npx prisma generate
@@ -106,8 +107,9 @@ rastreador-gastos-ocr/
 │   ├── register/        # Registro
 │   └── reports/        # Reportes
 ├── lib/                     # Utilidades
-│   ├── auth.ts          # Config NextAuth
-│   └── prisma.ts       # Cliente Prisma
+│   ├── auth.ts            # Config NextAuth
+│   ├── prisma.ts         # Cliente Prisma
+│   └── openai.ts        # OpenAI Vision (OCR)
 ├── prisma/
 │   └── schema.prisma  # Modelo de datos
 ├── types/                  # Tipos TypeScript
@@ -123,6 +125,7 @@ rastreador-gastos-ocr/
 | `DATABASE_URL` | Connection string de SQLite | `file:./dev.db` |
 | `NEXTAUTH_SECRET` | Secret para firmar tokens | `secret-muy-largo-123...` |
 | `NEXTAUTH_URL` | URL de la app | `http://localhost:3000` |
+| `OPENAI_API_KEY` | API key de OpenAI | `sk-...` |
 
 ---
 
