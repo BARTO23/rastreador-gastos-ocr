@@ -167,10 +167,10 @@ Crea una cuenta en `/register` - se crean automáticamente las 7 categorías por
 
 ## 🔌 Cambiar Modelo de IA
 
-Por defecto usa `anthropic/claude-3-haiku`. Puedes cambiarlo en `lib/openrouter.ts`:
+Por defecto usa `anthropic/claude-3-haiku`. Puedes cambiarlo en `lib/openrouter.ts` línea 94:
 
 ```typescript
-// Línea 58 - Cambia el modelo
+// Línea 94 - Cambia el modelo
 model: 'anthropic/claude-3-haiku',  // Modelo actual
 
 // Modelos recomendados:
