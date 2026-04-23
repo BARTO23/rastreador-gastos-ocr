@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { processReceiptImage } from '@/lib/openai'
+import { processReceiptImage } from '@/lib/gemini'
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
@@ -15,10 +15,7 @@ export async function POST(request: Request) {
     const { image } = body
 
     if (!image) {
-      return NextResponse.json(
-        { error: 'Imagen requerida' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Imagen requerida' }, { status: 400 })
     }
 
     const result = await processReceiptImage(image)
