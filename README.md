@@ -17,7 +17,7 @@
 
 | Característica | Descripción |
 |--------------|-------------|
-| 🤖 **AI OCR** | Escanea recibos con Google Gemini - extrae monto, fecha y categoría automáticamente |
+| 🤖 **AI OCR** | Escanea recibos con OpenRouter (Gemini) - extrae monto, fecha y categoría automáticamente |
 | 🏷️ **Categorización** | 7 categorías por defecto + categorías personalizadas |
 | 💰 **Presupuestos** | Define límites mensuales con alertas al 80% y 100% |
 | 📊 **Reportes Fiscales** | Exporta tus gastos en CSV por rango de fechas |
@@ -45,7 +45,7 @@ Mira el proyecto en acción:
 - **Frontend/Backend**: [Next.js 14](https://nextjs.org) (App Router)
 - **Base de Datos**: [SQLite](https://sqlite.org) + [Prisma](https://prisma.io)
 - **Auth**: [NextAuth.js](https://next-auth.js.org)
-- **AI/OCR**: [Google Gemini API](https://aistudio.google.com/app/apikey) (gemini-2.0-flash) para OCR y categorización
+- **AI/OCR**: [OpenRouter](https://openrouter.ai/) (Google Gemini via OpenRouter) para OCR y categorización
 - **Estilos**: [Tailwind CSS](https://tailwindcss.com)
 - **Icons**: [Lucide React](https://lucide.dev)
 
@@ -73,7 +73,7 @@ cp .env.example .env
 # DATABASE_URL="file:./dev.db"
 # NEXTAUTH_SECRET="tu-secret-aqui"
 # NEXTAUTH_URL="http://localhost:3000"
-# GEMINI_API_KEY="tu-api-key"
+# OPENROUTER_API_KEY="tu-api-key"
 
 # 4. Genera Prisma y crea la base de datos
 npx prisma generate
@@ -109,7 +109,7 @@ rastreador-gastos-ocr/
 ├── lib/                     # Utilidades
 │   ├── auth.ts            # Config NextAuth
 │   ├── prisma.ts         # Cliente Prisma
-│   └── gemini.ts       # Google Gemini (OCR)
+│   └── openrouter.ts    # OpenRouter (Gemini OCR)
 ├── prisma/
 │   └── schema.prisma  # Modelo de datos
 ├── types/                  # Tipos TypeScript
@@ -125,7 +125,7 @@ rastreador-gastos-ocr/
 | `DATABASE_URL` | Connection string de SQLite | `file:./dev.db` |
 | `NEXTAUTH_SECRET` | Secret para firmar tokens | `secret-muy-largo-123...` |
 | `NEXTAUTH_URL` | URL de la app | `http://localhost:3000` |
-| `GEMINI_API_KEY` | API key de Google AI Studio | `AIza...` |
+| `OPENROUTER_API_KEY` | API key de OpenRouter | `sk-...` |
 
 ---
 

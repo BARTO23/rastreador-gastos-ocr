@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { processReceiptImage } from '@/lib/gemini'
+import { processReceiptImage } from '@/lib/openrouter'
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
