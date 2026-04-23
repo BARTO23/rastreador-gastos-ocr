@@ -17,7 +17,7 @@
 
 | Característica | Descripción |
 |--------------|-------------|
-| 🤖 **AI OCR** | Escanea recibos con OpenRouter (Gemini) - extrae monto, fecha y categoría automáticamente |
+| 🤖 **AI OCR** | Escanea recibos con OpenRouter (AI de tu preferencia) - extrae monto, fecha y categoría automáticamente |
 | 🏷️ **Categorización** | 7 categorías por defecto + categorías personalizadas |
 | 💰 **Presupuestos** | Define límites mensuales con alertas al 80% y 100% |
 | 📊 **Reportes Fiscales** | Exporta tus gastos en CSV por rango de fechas |
@@ -45,7 +45,7 @@ Mira el proyecto en acción:
 - **Frontend/Backend**: [Next.js 14](https://nextjs.org) (App Router)
 - **Base de Datos**: [SQLite](https://sqlite.org) + [Prisma](https://prisma.io)
 - **Auth**: [NextAuth.js](https://next-auth.js.org)
-- **AI/OCR**: [OpenRouter](https://openrouter.ai/) (Google Gemini via OpenRouter) para OCR y categorización
+- **AI/OCR**: [OpenRouter](https://openrouter.ai/) - Modelo configurable (ver sección abajo)
 - **Estilos**: [Tailwind CSS](https://tailwindcss.com)
 - **Icons**: [Lucide React](https://lucide.dev)
 
@@ -109,7 +109,7 @@ rastreador-gastos-ocr/
 ├── lib/                     # Utilidades
 │   ├── auth.ts            # Config NextAuth
 │   ├── prisma.ts         # Cliente Prisma
-│   └── openrouter.ts    # OpenRouter (Gemini OCR)
+│   └── openrouter.ts    # OpenRouter (OCR)
 ├── prisma/
 │   └── schema.prisma  # Modelo de datos
 ├── types/                  # Tipos TypeScript
@@ -148,7 +148,7 @@ Crea una cuenta en `/register` - se crean automáticamente las 7 categorías por
 ### 2. Agregar Gasto con OCR
 1. Ve a `/add`
 2. Sube una imagen del ticket
-3. Tesseract.js extrae el texto
+3. OpenRouter extrae el texto con IA
 4. La app detecta monto y fecha automáticamente
 5. Confirma y guarda
 
@@ -162,6 +162,30 @@ Crea una cuenta en `/register` - se crean automáticamente las 7 categorías por
 1. Ve a `/reports` o `/budget`
 2. Selecciona rango de fechas
 3. Descarga CSV para tus taxes
+
+---
+
+## 🔌 Cambiar Modelo de IA
+
+Por defecto usa `anthropic/claude-3-haiku`. Puedes cambiarlo en `lib/openrouter.ts`:
+
+```typescript
+// Línea 58 - Cambia el modelo
+model: 'anthropic/claude-3-haiku',  // Modelo actual
+
+// Modelos recomendados:
+// - 'anthropic/claude-3-haiku'     (rápido, recomendado)
+// - 'google/gemini-2.0-flash-001'  (Gemini)
+// - 'openai/gpt-4o-mini'       (GPT-4)
+// - 'meta-llama/llama-3.2-11b-vision-instruct'  (Llama)
+```
+
+**Nota:** No todos los modelos soportan imágenes. Los recomendados para OCR son:
+- `anthropic/claude-3-haiku`
+- `google/gemini-2.0-flash-001`
+- `meta-llama/llama-3.2-11b-vision-instruct`
+
+Ver modelos disponibles: https://openrouter.ai/models
 
 ---
 
